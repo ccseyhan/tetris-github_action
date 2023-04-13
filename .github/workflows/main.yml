@@ -167,15 +167,15 @@ jobs:
     - uses: azure/docker-login@v1
       id: dockerlogin
       with:
-        login-server: ${{ secrets.ACR_USERNAME }}.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
+        login-server: ${{ vars.ACR_USERNAME }}.azurecr.io
+        username: ${{ vars.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
           push: true
-          tags: ${{ secrets.ACR_USERNAME }}.azurecr.io/tetris:${{ github.sha }}
+          tags: ${{ vars.ACR_USERNAME }}.azurecr.io/tetris:${{ github.sha }}
           
     - name: 'Login via Azure CLI'
       uses: azure/login@v1
@@ -187,9 +187,9 @@ jobs:
       shell: bash
         
     - name: 'Set private registry authentication settings'
-      run: az webapp config container set --name ${{ vars.WEBAPP }} --resource-group ${{ vars.RESOURCEGROUP }} --docker-registry-server-user ${{ secrets.ACR_USERNAME }} --docker-registry-server-password ${{ secrets.ACR_PASSWORD }}
+      run: az webapp config container set --name ${{ vars.WEBAPP }} --resource-group ${{ vars.RESOURCEGROUP }} --docker-registry-server-user ${{ vars.ACR_USERNAME }} --docker-registry-server-password ${{ secrets.ACR_PASSWORD }}
       
     - uses: azure/webapps-deploy@v2
       with:
         app-name: '${{ vars.WEBAPP }}'
-        images: '${{ secrets.ACR_USERNAME }}.azurecr.io/tetris:${{ github.sha }}'
+        images: '${{ vars.ACR_USERNAME }}.azurecr.io/tetris:${{ github.sha }}'
