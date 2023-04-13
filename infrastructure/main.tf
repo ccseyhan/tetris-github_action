@@ -57,21 +57,21 @@ resource "azurerm_linux_web_app" "app1" {
 
 resource "github_actions_environment_secret" "acr_password" {
   repository      = var.github_repo_name
-  environment     = "acr_env"
+  environment     = var.github_environment_name
   secret_name     = "ACR_PASSWORD"
   plaintext_value = azurerm_container_registry.acr.admin_password
 }
 
 resource "github_actions_environment_variable" "github_env_rg" {
   repository    = var.github_repo_name
-  environment   = "acr_env"
+  environment   = github_environment_name
   variable_name = "RESOURCEGROUP"
   value         = azurerm_resource_group.rg1.name
 }
 
 resource "github_actions_environment_variable" "github_env_webapp" {
   repository    = var.github_repo_name
-  environment   = "acr_env"
+  environment   = github_environment_name
   variable_name = "WEBAPP"
   value         = azurerm_linux_web_app.app1.name
 }
