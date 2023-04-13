@@ -196,15 +196,8 @@ jobs:
         app-name: '${{ vars.WEBAPP }}'
         images: '${{ vars.ACR_USERNAME }}.azurecr.io/tetris:${{ github.sha }}'
         
-    - name: Destroy the Infrastructure
-      timeout-minutes: 7200 # 5 days
-      working-directory: ${{ env.working-directory }}
-      run: |
-        echo "Are you sure you want to destroy the infrastructure?"
-        read -r -p "Enter 'yes' to continue: " response
-        if [[ "$response" != "yes" ]]; then
-          echo "Destroy cancelled by user."
-          exit 1
-        fi
-        terraform init
-        terraform destroy --auto-approve
+    - name: Trigger Other Workflow
+      uses: peter-evans/workflow-dispatch@v1
+      with:
+        workflow: destroy.yml
+        ref: main
