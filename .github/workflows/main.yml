@@ -20,7 +20,7 @@ env:
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
- # MY_ENVIRONMENT: acr_env
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
 jobs:
   terraform-plan:
@@ -61,8 +61,6 @@ jobs:
     - name: Terraform Plan
       id: tf-plan
       working-directory: ${{ env.working-directory }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         export exitcode=0
         terraform plan -lock=false -detailed-exitcode -no-color -out tfplan || export exitcode=$?
@@ -155,8 +153,6 @@ jobs:
 
     # Terraform Apply
     - name: Terraform Apply
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: terraform apply -auto-approve tfplan
       working-directory: ${{ env.working-directory }}
     
