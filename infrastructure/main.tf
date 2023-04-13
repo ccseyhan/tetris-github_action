@@ -64,14 +64,14 @@ resource "github_actions_environment_secret" "acr_password" {
 
 resource "github_actions_environment_variable" "github_env_rg" {
   repository    = var.github_repo_name
-  environment   = github_environment_name
+  environment   = var.github_environment_name
   variable_name = "RESOURCEGROUP"
   value         = azurerm_resource_group.rg1.name
 }
 
 resource "github_actions_environment_variable" "github_env_webapp" {
   repository    = var.github_repo_name
-  environment   = github_environment_name
+  environment   = var.github_environment_name
   variable_name = "WEBAPP"
   value         = azurerm_linux_web_app.app1.name
 }
