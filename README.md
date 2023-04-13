@@ -18,7 +18,7 @@ Terraform needs Azure Credentials to create the infrastructure. We need to provi
 - ARM_CLIENT_SECRET
 - AZURE_SERVICE_PRINCIPAL 
 
-To get these credentials we use this command 
+To get these credentials we use this command;
 ```
 az ad sp create-for-rbac --sdk-auth --role="Contributor" --scopes="/subscriptions/<subscription_id>"
 ```
