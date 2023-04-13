@@ -75,3 +75,10 @@ resource "github_actions_environment_variable" "github_env_webapp" {
   variable_name = "WEBAPP"
   value         = azurerm_linux_web_app.app1.name
 }
+
+resource "github_actions_environment_variable" "github_env_acr_username" {
+  repository    = var.github_repo_name
+  environment   = var.github_environment_name
+  variable_name = "ACR_USERNAME"
+  value         = var.acr_name
+}

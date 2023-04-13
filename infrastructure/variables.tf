@@ -48,3 +48,4 @@ variable "github_environment_name" {
   description = "Name of the Github Actions Environment you are working on"
   type        = string
   default     = "production"
+}
