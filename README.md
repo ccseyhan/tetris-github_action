@@ -10,30 +10,26 @@ The pipeline consists of three stages: Terraform plan, Terraform apply, and Buil
 
 1. Build/Push Docker Image - The final stage of the pipeline builds and pushes the Docker image of the Tetris game to the Azure Container Registry, and then deploys the image to the Azure Web App.
 
-## Pipeline Configuration
-The pipeline is configured using GitHub Actions. The configuration file main.yml is located in the .github/workflows directory. The pipeline is triggered by pushes to the main branch and pull requests against the main branch.
+## Setting Credentials
+Terraform needs Azure Credentials to create the infrastructure. We need to provide these values in environment for Terraform to look up.
+- ARM_SUBSCRIPTION_ID
+- ARM_TENANT_ID
+- ARM_CLIENT_ID
+- ARM_CLIENT_SECRET
+- AZURE_SERVICE_PRINCIPAL 
 
-- Secrets
-The pipeline uses the following secrets:
+To get these credentials we use this command 
+```
+az ad sp create-for-rbac --sdk-auth --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+```
 
-    - AZURE_CLIENT_ID - The Azure client ID used to authenticate with Azure.
-    - AZURE_CLIENT_SECRET - The Azure client secret used to authenticate with Azure.
-    - AZURE_SUBSCRIPTION_ID - The Azure subscription ID used to authenticate with Azure.
-    - AZURE_TENANT_ID - The Azure tenant ID used to authenticate with Azure.
-    - ACR_PASSWORD - The password used to authenticate with the Azure Container Registry.
+Terraform also needs GitHub Token to create the Variables in GitHub repository. We provide the token securely by defining it in the GitHub Actions Secrets as `GH_TOKEN`. We assign this value in the pipeline environment section to `GITHUB_TOKEN` with:
+```
+GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+```
 
-- Variables
-The pipeline uses the following variables:
-
-    - app_service_plan_name - The name of the Azure App Service Plan.
-    - app_service_sku - The SKU of the Azure App Service.
-    - acr_name - The name of the Azure Container Registry.
-    - acr_sku - The SKU of the Azure Container Registry.
-    - location - The location where the infrastructure will be deployed.
-    - rg_name - The name of the Azure Resource Group.
-    - web_app_name - The name of the Azure Web App.
-    - github_repo_name - The name of the GitHub repository.
 ## Terraform Configuration
+
 The Terraform configuration file main.tf is located in the infrastructure directory. The configuration file uses the azurerm and github providers to create the necessary infrastructure. The following resources are created:
 
 - An Azure Resource Group.
@@ -43,8 +39,50 @@ The Terraform configuration file main.tf is located in the infrastructure direct
 
 The Azure Container Registry is used to store the Docker image of the Tetris game, which is built and pushed to the registry during the pipeline. The Azure Web App is used to host the game.
 
-The Terraform configuration also creates the following GitHub Actions secrets and variables:
+Since GitHub Actions Pipeline uses an ephemeral agent we need to define a backend to keep our `terraform.tfstate`. We configure our backend to Azure Blob Container with following code 
+```
+  backend "azurerm" {
+    resource_group_name  = "sshkey"
+    storage_account_name = "ccseyhan"
+    container_name       = "tetris-githubaction-backend"
+    key                  = "terraform.tfstate"
+  }
+```
 
-- ACR_PASSWORD - The password used to authenticate with the Azure Container Registry.
-- WEBAPP - The name of the Azure Web App.
-- RESOURCEGROUP - The name of the Azure Resource Group.
+In order to access to our `Azure Container Registry` we need to set 
+```
+admin_enabled       = true
+```
+in the `azurerm_container_registry` block.
+
+To use later in the pipeline we define a `github_actions_environment_secret` 
+- ACR_PASSWORD
+
+and multiple `github_actions_environment_variable`
+- ACR_USERNAME
+- RESOURCEGROUP
+- WEBAPP
+
+## GitHub Actions Configuration
+The pipeline is configured using GitHub Actions. The configuration file main.yml is located in the .github/workflows directory. The pipeline is triggered by pushes to the main branch and pull requests against the main branch.
+
+Since we have our Terraform configuration files in a dedicated folder, we need to define this path in the job environment for the steps which need to access to this folder to run 
+```
+env:
+     working-directory: infrastructure/
+``` 
+
+The Sleep Step is necessary to allow some time for "Web App" to get ready.
+```
+      name: Sleep for 5 minutes
+      run: sleep 5m
+      shell: bash
+```
+
+Web App needs access to the ACR to pull the image. For that purpose we need to inject the necessary credentials into Web App configuration with 
+```
+name: 'Set private registry authentication settings'
+run: az webapp config container set --name ${{ vars.WEBAPP }} --resource-group ${{ vars.RESOURCEGROUP }} \                 
+      --docker-registry-server-user ${{ secrets.ACR_USERNAME }} \
+      --docker-registry-server-password ${{ secrets.ACR_PASSWORD }}
+```
