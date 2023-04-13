@@ -43,3 +43,8 @@ variable "github_repo_name" {
   type        = string
   default     = "tetris-github_action"
 }
+
+variable "github_environment_name" {
+  description = "Name of the Github Actions Environment you are working on"
+  type        = string
+  default     = "production"
